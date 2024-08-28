@@ -1,0 +1,60 @@
+version: "3"
+services:
+  web:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./web
+    volumes:
+      # - "/home/node/app/node_modules"
+      # - "./web:/home/node/app"
+      - "/app/node_modules"
+      - "./web:/app"
+    environment:
+      - WDS_SOCKET_PORT=0
+
+  api:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./api
+    volumes:
+      - "/home/node/app/node_modules"
+      - "./api:/home/node/app"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PGUSER=postgres
+      - PGHOST=postgres
+      - PGDATABASE=postgres
+      - PASSWORD=postgres_password
+      - PGPORT=5432
+
+  worker:
+    build:
+      dockerfile: Dockerfile.dev
+      context: ./worker
+    volumes:
+      - "/home/node/app/node_modules"
+      - "./worker:/home/node/app"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    restart: on-failure
+
+  redis:
+    image: "redis:latest"
+
+  postgres:
+    image: "postgres:latest"
+    environment:
+      - POSTGRES_PASSWORD=postgres_password
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - '3050:80'
+    restart: always
+    depends_on:
+      - api
+      - web
